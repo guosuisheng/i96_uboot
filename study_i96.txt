@@ -1,0 +1,120 @@
+/*
+Pin definitions for STM32F4 Discovery Board:
+
+PTT      PB13   output           P1 Pin37  1白
+COSLED   PA7    output           P1 Pin17
+LED      PD15   output           P1 Pin47
+   LED    PA6   output
+COS      PA5    input            P1 Pin15
+
+DSTAR    PD12   output           P1 Pin44
+DMR      PD13   output           P1 Pin45
+YSF      PD14   output           P1 Pin46
+P25      PD11   output           P1 Pin43
+NXDN     PD10   output           P1 Pin42
+
+RX       PA0    analog input     P1 Pin12
+RSSI     PA1    analog input     P1 Pin11
+TX       PA4    analog output    P1 Pin16 2灰
+
+EXT_CLK  PA15   input            P2 Pin40
+                                     GROUD 3浅紫
+                                                 蓝COS
+                                                 
+============
+USART3 - TXD PC10 - RXD PC11 (Discovery board)
+
+
+./opi2g_nand_write.py -v bootloader:u-boot.rda
+
+ ./opi2g_nand_write.py -v bootloader:bootloader.img modem:modem.img boot:boot.img system:system.img
+
+bootargs=mem=236M console=ttyS0,921600 root=/dev/ram rw rdinit=/init
+bootcmd=mux_config; ubi part nandroot; ubifsmount nandroot && ubifsload ${script_addr} "/boot/boot-nand.scr" && source ${script_addr};echo Running boot script failed;
+bootdelay=1
+
+bootcmd=ext2load mmc 0:1 ${script_addr}  /boot.scr;source ${script_addr}
+
+setenv bootcmd "ext2load mmc 0:1 ${script_addr}  /boot.scr;source ${script_addr}"
+
+
+setenv bootargs "mtdparts=rda_nand:64M@0(bootloader),-(nandrootfs) root=${rootdev} rootwait rootfstype=${rootfstype} console=ttyS0,921600 panic=10 consoleblank=0 loglevel=$ {verbosity} ${extraargs} ${extraboardargs}" 
+
+setenv bootargs "root=${rootdev} rootwait rootfstype=${rootfstype} console=ttyS0,921600 panic=10 consoleblank=0 loglevel=${verbosity} ${extraargs} ${extraboardargs}"
+
+ubiformat /dev/mtd1
+ubiattach /dev/ubi_ctrl -m 1
+ubimkvol /dev/ubi0 -N userdata -s 256MiB 
+ubimkvol /dev/ubi0 -N userdata -m
+mount -t ubifs ubi0:userdata /mnt/flash
+
+
+======================================
+ubiformat /dev/mtd0
+ubiattach /dev/ubi_ctrl -m 0
+ubimkvol /dev/ubi0 -N bootloader -s 64MiB 
+ubimkvol /dev/ubi0 -N rootfs -m
+mount -t ubifs ubi0:rootfs /mnt/flash
+
+
+=================
+cat /proc/mtd
+dev:    size   erasesize  name
+mtd0: 01800000 00040000 "reserved"
+mtd1: 00800000 00040000 "customer"
+mtd2: 0c000000 00040000 "system"
+mtd3: 00800000 00040000 "cache"
+mtd4: 11800000 00040000 "userdata"
+
+
+==============
+root@orangepi2g:~# mtd_debug info /dev/mtd0
+mtd.type = MTD_NANDFLASH
+mtd.flags = MTD_CAP_NANDFLASH
+mtd.size = 25165824 (24M)
+mtd.erasesize = 262144 (256K)
+mtd.writesize = 4096 (4K)
+mtd.oobsize = 256
+regions = 0
+
+root@orangepi2g:~# mtd_debug info /dev/mtd1
+mtd.type = MTD_NANDFLASH
+mtd.flags = MTD_CAP_NANDFLASH
+mtd.size = 8388608 (8M)
+mtd.erasesize = 262144 (256K)
+mtd.writesize = 4096 (4K)
+mtd.oobsize = 256
+regions = 0
+
+root@orangepi2g:~# mtd_debug info /dev/mtd2
+mtd.type = MTD_NANDFLASH
+mtd.flags = MTD_CAP_NANDFLASH
+mtd.size = 201326592 (192M)
+mtd.erasesize = 262144 (256K)
+mtd.writesize = 4096 (4K)
+mtd.oobsize = 256
+regions = 0
+
+root@orangepi2g:~# mtd_debug info /dev/mtd3
+mtd.type = MTD_NANDFLASH
+mtd.flags = MTD_CAP_NANDFLASH
+mtd.size = 8388608 (8M)
+mtd.erasesize = 262144 (256K)
+mtd.writesize = 4096 (4K)
+mtd.oobsize = 256
+regions = 0
+
+root@orangepi2g:~# mtd_debug info /dev/mtd4
+mtd.type = MTD_NANDFLASH
+mtd.flags = MTD_CAP_NANDFLASH
+mtd.size = 293601280 (280M)
+mtd.erasesize = 262144 (256K)
+mtd.writesize = 4096 (4K)
+mtd.oobsize = 256
+regions = 0
+
+
+
+
+
+

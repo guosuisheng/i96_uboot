@@ -1,0 +1,59 @@
+
+
+
+        if ext2load mmc 0:1 ${load_addr} armbianEnv.txt; then
+                env import -t ${load_addr} ${filesize}
+        fi
+
+        setenv bootargs "mtdparts=rda_nand:64M@0(bootloader),-(nandrootfs) root=${rootdev} rootwait rootfstype=${rootfstype} console=ttyS0,921600 panic=10 consoleblank=0 loglevel=${verbosity} ${extraargs} ${extraboardargs}"
+setenv rootdev "/dev/mmcblk0p2"
+setenv rootfstype "ext4"
+setenv bootargs "root=${rootdev} rootwait rootfstype=${rootfstype} console=ttyS0,921600 panic=10 consoleblank=0 loglevel=${verbosity} ${extraargs} ${extraboardargs}"
+
+ext2load mmc 0:1 ${initrd_addr} uInitrd2
+ext2load mmc 0:1 ${kernel_addr} zImage
+ext2load mmc 0:1 ${modem_addr} modem.bin
+
+ext2load mmc 0:1 ${factorydata_addr} factorydata.img
+
+mdcom_cal_loadm ${factorydata_addr}
+mdcom_loadm ${modem_addr}
+mdcom_check 1
+
+bootz ${kernel_addr} ${initrd_addr}
+
+mkimage -C none -A arm -T script -d /media/boot/boot.cmd /media/boot/boot.scr
+
+
+setenv mtdparts "mtdparts=rda_nand:2M(bootloader),510M(nandroot)"
+ubi part nandroot
+ubifsmount nandroot
+
+ext2load mmc 0:1 ${initrd_addr} uInitrd2
+RDA > ext2load mmc 0:1 ${initrd_addr} uInitrd2
+Loading file "uInitrd2" from mmc device 0:1 (xxa1)
+3091319 bytes read
+
+# target kernel : 0x2A00000
+nand erase 0x2A00000 0x2F2B77
+nand write ${initrd_addr}   0x2A00000  0x2F2B77
+==================
+ext2load mmc 0:1 ${kernel_addr} zImage
+RDA > ext2load mmc 0:1 ${kernel_addr} zImage
+Loading file "zImage" from mmc device 0:1 (xxa1)
+3452320 bytes read
+
+nand erase 0x2F00000 3452320
+nand write ${kernel_addr} 0x2F00000 0x34ADA0
+
+==========================================
+ext2load mmc 0:1 ${modem_addr} modem.bin
+
+size 0x200000
+nand erase 0x3F00000 0x200000
+nand write ${modem_addr} 0x3F00000 0x200000
+===
+
+nand read ${initrd_addr} 0x2A00000 0x2F2B77
+nand read  ${kernel_addr} 0x2F00000 0x34ADA0
+nand read  ${modem_addr} 0x3F00000 0x200000
